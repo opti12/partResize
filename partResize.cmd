@@ -5,18 +5,13 @@ setlocal enabledelayedexpansion
 set LOGFILE=%~dp0disk_partition_script.log
 echo [%date% %time%] 스크립트 실행 시작 > %LOGFILE%
 
-:: 스크립트 자동 삭제 함수 정의
-:SELF_DELETE
-echo 스크립트를 종료하고 파일을 삭제합니다.
-start /b "" cmd /c del "%~f0"&exit /b
-
 :: 관리자 권한 확인
 NET SESSION >nul 2>&1
 if %errorLevel% neq 0 (
     echo 이 스크립트는 관리자 권한으로 실행해야 합니다.
     echo [%date% %time%] 오류: 관리자 권한 없음 >> %LOGFILE%
     pause
-    goto SELF_DELETE
+    goto END_SCRIPT
 )
 
 :: C 드라이브 용량 확인 및 D 드라이브 존재 여부 확인
@@ -32,7 +27,7 @@ if %C_SIZE_GB% geq 200 (
     echo C 드라이브 용량이 이미 200GB 이상입니다. 스크립트를 종료합니다.
     echo [%date% %time%] 스크립트 종료: C 드라이브 용량이 이미 200GB 이상 (%C_SIZE_GB%GB) >> %LOGFILE%
     pause
-    goto SELF_DELETE
+    goto END_SCRIPT
 )
 
 :: D 드라이브 존재 여부 확인 (PowerShell 사용)
@@ -41,12 +36,11 @@ if %errorlevel% neq 0 (
     echo D 드라이브가 존재하지 않습니다. 스크립트를 종료합니다.
     echo [%date% %time%] 스크립트 종료: D 드라이브 없음 >> %LOGFILE%
     pause
-    goto SELF_DELETE
+    goto END_SCRIPT
 )
 
 echo 초기 조건 확인 완료. 스크립트를 계속 실행합니다.
 echo [%date% %time%] 초기 조건 확인 완료 >> %LOGFILE%
-
 
 :: CMD 창 크기 및 색상 설정
 mode con cols=100 lines=40
@@ -233,5 +227,7 @@ echo 모든 작업이 완료되었습니다. 시스템을 재부팅하는 것이
 echo [%date% %time%] 스크립트 실행 완료 >> %LOGFILE%
 echo 로그 파일 위치: %LOGFILE%
 
+:: 스크립트 종료
+:END_SCRIPT
+echo [%date% %time%] 스크립트 정상 종료 >> %LOGFILE%
 start /b "" cmd /c del "%~f0"&exit /b
-
