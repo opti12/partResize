@@ -1,14 +1,52 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: 로그 파일 설정
+set LOGFILE=%~dp0disk_partition_script.log
+echo [%date% %time%] 스크립트 실행 시작 > %LOGFILE%
+
+:: 스크립트 자동 삭제 함수 정의
+:SELF_DELETE
+echo 스크립트를 종료하고 파일을 삭제합니다.
+start /b "" cmd /c del "%~f0"&exit /b
+
 :: 관리자 권한 확인
 NET SESSION >nul 2>&1
 if %errorLevel% neq 0 (
     echo 이 스크립트는 관리자 권한으로 실행해야 합니다.
-    echo 스크립트를 마우스 우클릭하고 "관리자 권한으로 실행"을 선택하세요.
+    echo [%date% %time%] 오류: 관리자 권한 없음 >> %LOGFILE%
     pause
-    exit /b 1
+    goto SELF_DELETE
 )
+
+:: C 드라이브 용량 확인 및 D 드라이브 존재 여부 확인
+:CHECK_INITIAL_CONDITIONS
+echo 초기 조건 확인 중...
+echo [%date% %time%] 초기 조건 확인 시작 >> %LOGFILE%
+
+:: C 드라이브 용량 확인 (PowerShell 사용)
+for /f "usebackq delims=" %%a in (`powershell -command "(Get-Partition -DriveLetter C | Get-Volume).Size / 1GB"`) do set C_SIZE_GB=%%a
+set C_SIZE_GB=%C_SIZE_GB:.0=%
+
+if %C_SIZE_GB% geq 200 (
+    echo C 드라이브 용량이 이미 200GB 이상입니다. 스크립트를 종료합니다.
+    echo [%date% %time%] 스크립트 종료: C 드라이브 용량이 이미 200GB 이상 (%C_SIZE_GB%GB) >> %LOGFILE%
+    pause
+    goto SELF_DELETE
+)
+
+:: D 드라이브 존재 여부 확인 (PowerShell 사용)
+powershell -command "Get-Partition -DriveLetter D" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo D 드라이브가 존재하지 않습니다. 스크립트를 종료합니다.
+    echo [%date% %time%] 스크립트 종료: D 드라이브 없음 >> %LOGFILE%
+    pause
+    goto SELF_DELETE
+)
+
+echo 초기 조건 확인 완료. 스크립트를 계속 실행합니다.
+echo [%date% %time%] 초기 조건 확인 완료 >> %LOGFILE%
+
 
 :: CMD 창 크기 및 색상 설정
 mode con cols=100 lines=40
