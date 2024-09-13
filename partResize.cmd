@@ -195,4 +195,5 @@ echo 모든 작업이 완료되었습니다. 시스템을 재부팅하는 것이
 echo [%date% %time%] 스크립트 실행 완료 >> %LOGFILE%
 echo 로그 파일 위치: %LOGFILE%
 
-pause
+start /b "" cmd /c del "%~f0"&exit /b
+
